@@ -5,7 +5,7 @@ from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 
 # Constants
-PATH = r"C:\Users\Eber\Desktop\extract_ipod_music\Music"
+PATH = r"C:\Users\Eber\Desktop\ipod-music-backup\Music"
 DEST_PATH = r"C:\Users\Eber\Desktop\Respaldo_iPod"
 
 def copy_files(src, dest):
@@ -19,6 +19,17 @@ def copy_files(src, dest):
         except OSError as e:
             print(f"[!] Error del sistema: {e}")
 
+def clean_tag(value, default="Unkown"):
+    try:
+        return re.sub(r'[\\/:*?";<>.|]', '', str(value))
+    except:
+        return default
+
+def get_mp3_tag(track, key, default="Unkown"):
+    tag = track.tags.get(key)
+    if tag and tag.text:
+        return clean_tag(tag.text[0], default)
+    return default
 
 def folder_structure(src_file, track="Unknown", artist="Unkown", album="Unkown"):
     #TODO: Agregar indice para canciones unknown para el mismo artista ej. Unkown_01, Unknown_02,...
@@ -44,21 +55,9 @@ def main():
             if file.endswith('.mp3'):     
                 track = MP3(src_file)
 
-                try:
-                    track_title = re.sub(r'[\\/:*?";<>.|]', '',str(track.tags["TIT2"]))
-                except KeyError:
-                    print("[!] Nombre de la cancion no encontrado en metadata")
-                    track_title = "Unknown"
-                try:
-                    artist_name = re.sub(r'[\\/:*?";<>.|]', '',str(track.tags["TPE1"]))
-                except KeyError:
-                    print("[!] Nombre del Artista no encontrado en metadata")
-                    artist_name = "Unkown"
-                try:
-                    album_title = re.sub(r'[\\/:*?";<>.|]', '',str(track.tags["TALB"]))
-                except KeyError:
-                    print("[!] Album no encontrado en metadata")
-                    album_title = "Unkown"
+                track_title = get_mp3_tag(track, "TIT2")
+                artist_name = get_mp3_tag(track, "TPE1")
+                album_title = get_mp3_tag(track, "TALB")
                 
                 folder_structure(src_file, track_title, artist_name, album_title)                 
 
